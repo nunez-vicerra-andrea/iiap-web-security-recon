@@ -1,55 +1,60 @@
 # IIAP Web Security Recon
 
-**Herramienta automatizada para la estandarización del footprinting y generación de reportes técnicos de seguridad web en el Instituto de Investigaciones de la Amazonía Peruana (IIAP).**
+**Herramienta interactiva y automatizada para la estandarización del footprinting y generación de reportes técnicos de seguridad web en el Instituto de Investigaciones de la Amazonía Peruana (IIAP).**
 
 ---
 
 ## 📌 1. Descripción del Proyecto
 
-El proyecto **`iiap-web-security-recon`** es una solución desarrollada en el marco de la investigación y fortalecimiento de la ciberseguridad institucional en el **IIAP**. Su propósito central es automatizar y estandarizar la fase inicial de reconocimiento pasivo (*footprinting*) de la superficie de ataque expuesta en las aplicaciones y portales web institucionales.
+El proyecto **`iiap-web-security-recon`** es una plataforma desarrollada en el marco de la investigación y fortalecimiento de la ciberseguridad institucional en el **IIAP**. Proporciona una interfaz web moderna y automatizada (Dashboard Localhost en Flask) y una interfaz de consola (CLI) para realizar el reconocimiento pasivo (*footprinting*) de la superficie de ataque perimetral de portales y servicios web institucionales.
 
-La herramienta evalúa la postura de seguridad perimetral y genera de forma automática un **informe técnico institucional en formato PDF** estructurado, facilitando la toma de decisiones ágil y la remediación de vulnerabilidades antes de que puedan ser aprovechadas por actores maliciosos.
+La herramienta evalúa la postura de seguridad perimetral, visualiza los hallazgos en tiempo real a través de tarjetas y tablas interactivas, y permite exportar un **informe técnico institucional en formato PDF** estructurado y oficial con membrete del IIAP.
 
 ### Objetivos Clave
 - **Estandarización:** Unificar los criterios de auditoría técnica bajo directrices reconocidas internacionalmente (**OWASP Top 10** y **OWASP Secure Headers Project**).
 - **Eficiencia y SLA:** Reducir los tiempos de recolección y reporte a menos de **5 minutos** (típicamente entre 5 y 15 segundos).
+- **Dashboard Web Moderno:** Interfaz gráfica interactiva inspirada en consolas de ciberseguridad (SOC / OWASP ZAP) desarrollada con Flask.
 - **Generación Automática de Entregables:** Compilar métricas, tablas de puertos y matrices de cabeceras en un PDF maquetado con la identidad corporativa del IIAP.
-- **Enfoque DevSecOps:** Integración nativa en pipelines de integración continua o tareas programadas de auditoría perimetral.
+- **Enfoque DevSecOps:** Endpoint API RESTful para integración en pipelines de CI/CD o auditorías periódicas automatizadas.
 
 ---
 
 ## 🏗️ 2. Arquitectura del Sistema
 
-El proyecto sigue una arquitectura modular en Python desacoplada, separando la lógica de recolección de datos, el procesamiento/auditoría y la capa de presentación/reportes.
+El proyecto sigue una arquitectura desacoplada y modular en Python:
 
 ```
 iiap-web-security-recon/
 │
 ├── .gitignore          # Reglas de exclusión para Git (venv, bytecode, reportes PDF)
-├── README.md           # Documentación completa y técnica del proyecto
-├── requirements.txt    # Dependencias del ecosistema Python
-├── main.py             # Orquestador y punto de entrada por consola (CLI)
+├── README.md           # Documentación técnica completa
+├── requirements.txt    # Dependencias del proyecto (Flask, Requests, Nmap, FPDF)
+├── app.py              # Servidor Web Flask (Dashboard Localhost y API REST)
+├── main.py             # Orquestador CLI por consola y lanzador alternativo
 ├── scanner.py          # Motor de footprinting pasivo, DNS, cabeceras y nmap/sockets
-├── pdf_generator.py    # Generador de reportes PDF técnicos con FPDF
+├── pdf_generator.py    # Generador de reportes PDF institucionales con FPDF
+├── templates/
+│   └── index.html      # Dashboard Web interactivo de ciberseguridad
 └── assets/
     └── .gitkeep        # Directorio para recursos estáticos y logos institucionales
 ```
 
-### Flujo de Ejecución
+### Flujo de Funcionamiento
 
 ```mermaid
 graph TD
-    A[Usuario / Consola CLI] -->|Ingresa URL o IP| B(main.py - Orquestador)
-    B --> C[scanner.py - WebScanner]
-    C -->|1. Resolucion DNS| D[socket.gethostbyname]
-    C -->|2. Analisis Pasivo| E[Auditoria de Cabeceras HTTP OWASP]
-    C -->|3. Escaneo Perimetral| F[python-nmap / Sockets Fallback]
-    D --> G[(Estructura de Resultados)]
-    E --> G
-    F --> G
-    G --> H[pdf_generator.py - PDFReport]
-    H -->|Compilacion FPDF| I[Reporte Tecnico PDF Institucional]
-    I --> J[Fin de Auditoria con Medicion de Tiempo]
+    A[Navegador Web / Usuario] -->|Accede a http://127.0.0.1:5000| B[app.py - Servidor Flask]
+    B --> C[templates/index.html - Dashboard Web]
+    C -->|POST /api/scan| B
+    B --> D[scanner.py - WebScanner]
+    D -->|1. Resolucion DNS| E[socket.gethostbyname]
+    D -->|2. Analisis Pasivo| F[Auditoria Cabeceras HTTP OWASP]
+    D -->|3. Escaneo Perimetral| G[python-nmap / Sockets Fallback]
+    E & F & G --> H[(Consolidacion de Resultados)]
+    H -->|Respuesta JSON| C
+    C -->|POST /api/export-pdf| B
+    B --> I[pdf_generator.py - PDFReport]
+    I -->|Descarga Directa| J[Reporte Tecnico PDF Institucional]
 ```
 
 ---
@@ -83,25 +88,29 @@ Se evalúan 6 directivas fundamentales de seguridad web:
 
 ---
 
-## ⚙️ 4. Requisitos Previos
+## 🌐 4. Endpoints de la API REST (`app.py`)
 
-1. **Python 3.8 o superior** instalado en el sistema.
-2. *(Opcional pero recomendado)* **Nmap** instalado en el sistema operativo y agregado a las variables de entorno (`PATH`). Si no está disponible, el script activará el modo socket fallback automáticamente.
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/` | Carga el Dashboard Web interactivo en el navegador. |
+| `GET` | `/api/health` | Verifica la disponibilidad y estado del servicio. |
+| `POST` | `/api/scan` | Procesa un objetivo (`{"target": "iiap.gob.pe"}`) y retorna las métricas en JSON. |
+| `POST` | `/api/export-pdf` | Compila y descarga el reporte oficial institucional en formato PDF. |
 
 ---
 
-## 🚀 5. Instalación y Configuración
+## ⚙️ 5. Requisitos Previos e Instalación
 
-### Paso 1: Clonar el Repositorio
+### 1. Clonar el Repositorio
 ```bash
 git clone https://github.com/nunez-vicerra-andrea/iiap-web-security-recon.git
 cd iiap-web-security-recon
 ```
 
-### Paso 2: Crear y Activar un Entorno Virtual
+### 2. Crear y Activar un Entorno Virtual
 En Windows (PowerShell):
 ```powershell
-python -m venv .venv
+py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
@@ -111,53 +120,44 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### Paso 3: Instalar Dependencias
+### 3. Instalar Dependencias
 ```bash
-pip install -r requirements.txt
+py -m pip install -r requirements.txt
 ```
 
 ---
 
-## 💻 6. Modo de Uso
+## 💻 6. Guía de Ejecución
 
-### Ejecución Interactiva (Recomendada)
-Ejecute el script principal directamente. El programa solicitará el objetivo:
+### Opción A: Iniciar el Dashboard Web Interactivo (Recomendado)
+
+Inicie el servidor web de Flask ejecutando:
 ```bash
-python main.py
+py app.py
 ```
-**Ejemplo de interacción:**
-```text
- ========================================================================
-   IIAP WEB SECURITY RECON - FOOTPRINTING & AUDITORIA TECNICA
-   Instituto de Investigaciones de la Amazonia Peruana (IIAP)
-   Area de Ciberseguridad & DevSecOps
- ========================================================================
+*(O de manera alternativa: `py main.py --web`)*
 
- [?] Ingrese la URL o IP del objetivo (ej. iiap.gob.pe): iiap.gob.pe
+Una vez iniciado, abra su navegador web e ingrese a:
+👉 **[http://127.0.0.1:5000](http://127.0.0.1:5000)**
 
- [*] Iniciando auditoria para: iiap.gob.pe
- [*] [1/4] Inicializando motor de reconocimiento...
- [*] [2/4] Resolviendo DNS y geolocalizacion logica...
-     [+] Hostname: iiap.gob.pe -> IP: 200.60.103.138
- [*] [3/4] Evaluando cabeceras HTTP de seguridad (OWASP)...
-     [+] Se evaluaron 6 directivas de seguridad.
- [*] [4/4] Escaneando puertos principales (22, 80, 443, 8080)...
-     [!] Puertos abiertos detectados: [80, 443]
+#### Características del Dashboard:
+- **Formulario de Objetivo:** Ingrese el dominio o IP, o seleccione accesos directos preconfigurados del IIAP.
+- **Tarjetas KPI:** Muestra en tiempo real la IP resuelta, cantidad de puertos abiertos, cabeceras seguras y tiempo de escaneo.
+- **Pestaña Cabeceras HTTP:** Matriz interactiva de seguridad con semáforo de colores según criticidad y recomendaciones OWASP.
+- **Pestaña Puertos Nmap:** Tabla dinámica con puertos 22, 80, 443, 8080 y banners de servicios.
+- **Exportación con un Clic:** Botón "Exportar a PDF" que descarga directamente el informe técnico oficial.
 
- [*] Consolidando datos y generando reporte tecnico institucional...
-     [+] Reporte generado exitosamente: C:\Documentos\iiap-web-security-recon\reporte_recon_iiap.gob.pe_20261009_110625.pdf
+---
 
- ========================================================================
-  [>] Auditoria completada en: 00m 08.45s (8.45 s)
-  [>] Motor utilizado: Python Socket Engine (Nmap CLI no disponible)
-  [>] Cumplimiento de SLA: APROBADO (< 5 min)
- ========================================================================
-```
+### Opción B: Ejecución por Consola (Modo CLI)
 
-### Ejecución por Línea de Comandos (Automatización DevSecOps)
-Puede pasar el objetivo y una ruta de salida personalizada mediante flags:
+Para entornos sin entorno gráfico o scripts de terminal:
 ```bash
-python main.py -t iiap.gob.pe -o reporte_auditoria_iiap.pdf
+py main.py
+```
+O especificando parámetros directamente:
+```bash
+py main.py -t iiap.gob.pe -o reporte_auditoria.pdf
 ```
 
 ---

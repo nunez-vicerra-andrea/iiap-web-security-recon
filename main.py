@@ -51,8 +51,22 @@ def main():
         help="Ruta o nombre del archivo PDF de salida (opcional)",
         default=None
     )
+    parser.add_argument(
+        "-w", "--web",
+        dest="web_mode",
+        action="store_true",
+        help="Iniciar el Dashboard Web interactivo en Flask (http://127.0.0.1:5000)",
+        default=False
+    )
 
     args = parser.parse_args()
+
+    # Si se solicitó el modo web, ejecutar servidor Flask
+    if args.web_mode:
+        from app import app
+        print("\n [🌐] Iniciando Dashboard Web de Ciberseguridad en http://127.0.0.1:5000 ...")
+        app.run(host="127.0.0.1", port=5000, debug=False)
+        return
 
     # Si no se pasó argumento por consola, solicitar de forma interactiva
     target = args.target

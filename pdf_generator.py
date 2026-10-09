@@ -115,7 +115,7 @@ class PDFReport:
         self.pdf.set_fill_color(235, 245, 238)
         self.pdf.set_text_color(20, 90, 50)
         self.pdf.cell(0, 7, sanitize_text(" 1. INFORMACION GENERAL DEL OBJETIVO Y METADATOS"), fill=True, ln=True)
-        self.ln(2)
+        self.pdf.ln(2)
 
         meta = [
             ("Objetivo ingresado:", self.data.get("target", "N/A")),
@@ -136,7 +136,7 @@ class PDFReport:
             self.pdf.set_text_color(20, 20, 20)
             self.pdf.cell(0, 5, sanitize_text(str(val)), ln=True)
 
-        self.ln(4)
+        self.pdf.ln(4)
 
     def _add_ports_table(self):
         """Sección 2: Tabla de puertos principales y banners de servicios."""
@@ -144,7 +144,7 @@ class PDFReport:
         self.pdf.set_fill_color(235, 245, 238)
         self.pdf.set_text_color(20, 90, 50)
         self.pdf.cell(0, 7, sanitize_text(" 2. ESCANEO DE PUERTOS PRINCIPALES Y SERVICIOS EXPUESTOS"), fill=True, ln=True)
-        self.ln(2)
+        self.pdf.ln(2)
 
         # Encabezado de la tabla
         self.pdf.set_fill_color(20, 90, 50)
@@ -161,7 +161,7 @@ class PDFReport:
 
         for title, width in cols:
             self.pdf.cell(width, 6, sanitize_text(title), border=1, align="C", fill=True)
-        self.ln()
+        self.pdf.ln()
 
         # Filas de datos
         ports = self.data.get("ports_info", [])
@@ -190,9 +190,9 @@ class PDFReport:
                 
                 banner_str = str(p.get("banner", "N/A"))[:55]
                 self.pdf.cell(86, 5.5, sanitize_text(banner_str), border=1, align="L", fill=True)
-                self.ln()
+                self.pdf.ln()
 
-        self.ln(4)
+        self.pdf.ln(4)
 
     def _add_headers_matrix(self):
         """Sección 3: Matriz de evaluación de cabeceras HTTP de seguridad."""
@@ -200,7 +200,7 @@ class PDFReport:
         self.pdf.set_fill_color(235, 245, 238)
         self.pdf.set_text_color(20, 90, 50)
         self.pdf.cell(0, 7, sanitize_text(" 3. MATRIZ DE EVALUACION DE CABECERAS HTTP DE SEGURIDAD (OWASP)"), fill=True, ln=True)
-        self.ln(2)
+        self.pdf.ln(2)
 
         # Encabezado
         self.pdf.set_fill_color(20, 90, 50)
@@ -217,7 +217,7 @@ class PDFReport:
 
         for title, width in cols:
             self.pdf.cell(width, 6, sanitize_text(title), border=1, align="C", fill=True)
-        self.ln()
+        self.pdf.ln()
 
         headers_data = self.data.get("headers_analysis", [])
         self.pdf.set_font("Helvetica", "", 7.5)
@@ -261,9 +261,9 @@ class PDFReport:
             # Recomendación
             rec_short = str(h.get("recommendation", ""))[:36]
             self.pdf.cell(54, 5.5, sanitize_text(rec_short), border=1, fill=True)
-            self.ln()
+            self.pdf.ln()
 
-        self.ln(4)
+        self.pdf.ln(4)
 
     def _add_devsecops_recommendations(self):
         """Sección 4: Buenas prácticas y recomendaciones técnicas."""
@@ -271,7 +271,7 @@ class PDFReport:
         self.pdf.set_fill_color(235, 245, 238)
         self.pdf.set_text_color(20, 90, 50)
         self.pdf.cell(0, 7, sanitize_text(" 4. ACCIONES CORRECTIVAS Y RECOMENDACIONES DEVSECOPS"), fill=True, ln=True)
-        self.ln(2)
+        self.pdf.ln(2)
 
         recs = [
             "1. Habilitar HSTS (HTTP Strict Transport Security) con directiva includeSubDomains para forzar cifrado TLS.",

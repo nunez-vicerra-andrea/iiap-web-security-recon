@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IIAP Web Security Recon | Dashboard de Auditoría y Footprinting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0b0f14;
+      --bg-card: #121820;
+      --bg-card-hover: #17202b;
+      --border-color: #1e293b;
+      --border-highlight: #22c55e33;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --iiap-green: #145A32;
+      --iiap-gold: #eab308;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.12);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --info: #38bdf8;
+      --info-bg: rgba(56, 189, 248, 0.12);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-ui: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Fondo con gradiente sutil de ciberseguridad */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at 15% 15%, rgba(20, 90, 50, 0.15) 0%, transparent 40%),
+                  radial-gradient(circle at 85% 75%, rgba(16, 185, 129, 0.08) 0%, transparent 45%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Header Institucional IIAP */
+    header {
+      background: rgba(18, 24, 32, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #145a32 0%, #10b981 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--primary-glow);
+      font-size: 22px;
+    }
+
+    .brand-text h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-text h1 span {
+      background: linear-gradient(90deg, #10b981, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .badge-status {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      padding: 5px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Control Panel Card */
+    .control-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .control-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #145a32, #10b981, #38bdf8);
+    }
+
+    .card-title-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .card-title-group h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-group .sla-badge {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .search-bar-form {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      height: 48px;
+      background: #090d12;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0 16px 0 44px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-wrapper input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .input-wrapper .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    .btn {
+      height: 48px;
+      padding: 0 24px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      border: none;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #2b394e;
+      color: #38bdf8;
+      border-color: #38bdf8;
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: transparent;
+    }
+
+    .preset-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .preset-label {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .chip:hover {
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    /* Scanning Progress Animation */
+    .scanning-status-box {
+      display: none;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 0 20px var(--primary-glow);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .spinner {
+      width: 26px;
+      height: 26px;
+      border: 3px solid rgba(16, 185, 129, 0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .scanning-text h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .scanning-text p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Metrics Overview Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .metric-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .metric-icon {
+      font-size: 1.2rem;
+    }
+
+    .metric-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: var(--font-mono);
+    }
+
+    .metric-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Results Tabs */
+    .tabs-header {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-ui);
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 12px 20px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    .tab-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 24px;
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Tables Styles */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-dim);
+      font-weight: 600;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .font-mono {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    /* Status Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .badge-open {
+      background: var(--danger-bg);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-closed {
+      background: var(--success-bg);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-present {
+      background: var(--success-bg);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-absent {
+      background: var(--danger-bg);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-exposed {
+      background: var(--warning-bg);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-secure {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .badge-risk-alto {
+      background: var(--danger-bg);
+      color: #ef4444;
+      font-weight: 700;
+    }
+
+    .badge-risk-medio {
+      background: var(--warning-bg);
+      color: #f59e0b;
+      font-weight: 600;
+    }
+
+    .badge-risk-bajo {
+      background: rgba(100, 116, 139, 0.15);
+      color: #94a3b8;
+    }
+
+    .badge-risk-seguro {
+      background: var(--success-bg);
+      color: #10b981;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 14px;
+      opacity: 0.6;
+    }
+
+    .empty-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .empty-sub {
+      font-size: 0.85rem;
+    }
+
+    /* Recommendations Cards */
+    .rec-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .rec-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+    }
+
+    .rec-title {
+      font-weight: 600;
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rec-body {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* JSON Box */
+    .json-box {
+      background: #080c10;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #38bdf8;
+      max-height: 480px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 20px 32px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: rgba(18, 24, 32, 0.6);
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      header {
+        padding: 14px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .system-status {
+        width: 100%;
+        justify-content: space-between;
+      }
+      main {
+        padding: 16px 14px;
+        gap: 20px;
+      }
+      .search-bar-form {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Encabezado Institucional IIAP -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">🛡️</div>
+      <div class="brand-text">
+        <h1>IIAP <span>Web Security Recon</span></h1>
+        <p>Instituto de Investigaciones de la Amazonía Peruana • Plataforma de Footprinting y Auditoría</p>
+      </div>
+    </div>
+    <div class="system-status">
+      <div class="badge-status">API En Línea • 127.0.0.1:5000</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Tarjeta de Control y Entrada de Objetivo -->
+    <section class="control-card">
+      <div class="card-title-group">
+        <h2>🎯 Panel de Escaneo y Reconocimiento Perimetral</h2>
+        <span class="sla-badge">⏱️ SLA Optimizado: < 5 minutos</span>
+      </div>
+
+      <form id="scanForm" class="search-bar-form">
+        <div class="input-wrapper">
+          <span class="search-icon">🌐</span>
+          <input 
+            type="text" 
+            id="targetInput" 
+            placeholder="Ingrese la URL o IP a auditar (ej. iiap.gob.pe, 192.168.1.1)" 
+            required
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+        <button type="submit" id="btnScan" class="btn btn-primary">
+          <span>🚀 Iniciar Escaneo</span>
+        </button>
+        <button type="button" id="btnExportPdf" class="btn btn-secondary" disabled>
+          <span>📑 Exportar a PDF</span>
+        </button>
+      </form>
+
+      <!-- Chips de prueba rápida -->
+      <div class="preset-chips">
+        <span class="preset-label">Objetivos sugeridos:</span>
+        <button type="button" class="chip" onclick="setTarget('iiap.gob.pe')">iiap.gob.pe</button>
+        <button type="button" class="chip" onclick="setTarget('repositorio.iiap.gob.pe')">repositorio.iiap.gob.pe</button>
+        <button type="button" class="chip" onclick="setTarget('terrai.iiap.gob.pe')">terrai.iiap.gob.pe</button>
+        <button type="button" class="chip" onclick="setTarget('scanme.nmap.org')">scanme.nmap.org</button>
+      </div>
+
+      <!-- Estado de progreso animado durante escaneo -->
+      <div id="scanningStatus" class="scanning-status-box">
+        <div class="spinner"></div>
+        <div class="scanning-text">
+          <h4 id="scanStepTitle">Ejecutando reconocimiento pasivo...</h4>
+          <p id="scanStepDetail">Resolviendo DNS, auditando cabeceras OWASP y verificando puertos principales...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Indicadores Clave de Desempeño (KPIs) -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Dirección IP Objetivo</span>
+          <span class="metric-icon">📍</span>
+        </div>
+        <div class="metric-value" id="kpiIp">---.---.---.---</div>
+        <div class="metric-sub" id="kpiHostname">Esperando análisis...</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Puertos Abiertos</span>
+          <span class="metric-icon">🔌</span>
+        </div>
+        <div class="metric-value" id="kpiPorts">0 / 4</div>
+        <div class="metric-sub" id="kpiPortsSub">Puertos evaluados (22, 80, 443, 8080)</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Cabeceras Evaluadas</span>
+          <span class="metric-icon">🛡️</span>
+        </div>
+        <div class="metric-value" id="kpiHeaders">0 / 6</div>
+        <div class="metric-sub" id="kpiHeadersSub">Matriz de directivas OWASP</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Tiempo de Ejecución</span>
+          <span class="metric-icon">⚡</span>
+        </div>
+        <div class="metric-value" id="kpiTime">0.00 s</div>
+        <div class="metric-sub" id="kpiEngine">Motor: En espera</div>
+      </div>
+    </section>
+
+    <!-- Pestañas de Visualización Detallada -->
+    <section class="results-section">
+      <div class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab('tab-headers')">🛡️ Matriz de Cabeceras HTTP</button>
+        <button class="tab-btn" onclick="switchTab('tab-ports')">🔌 Puertos y Servicios Nmap</button>
+        <button class="tab-btn" onclick="switchTab('tab-recs')">💡 Recomendaciones DevSecOps</button>
+        <button class="tab-btn" onclick="switchTab('tab-raw')">💻 Datos JSON (API)</button>
+      </div>
+
+      <!-- Tab 1: Matriz de Cabeceras HTTP -->
+      <div id="tab-headers" class="tab-content active">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Directiva de Seguridad</th>
+                <th>Estado</th>
+                <th>Riesgo</th>
+                <th>Valor Detectado</th>
+                <th>Recomendación Técnica OWASP</th>
+              </tr>
+            </thead>
+            <tbody id="headersTableBody">
+              <tr>
+                <td colspan="5" class="empty-state">
+                  <div class="empty-icon">🛡️</div>
+                  <div class="empty-title">Sin datos de auditoría aún</div>
+                  <div class="empty-sub">Ingrese un objetivo arriba y presione "Iniciar Escaneo" para evaluar las cabeceras HTTP.</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Puertos y Servicios -->
+      <div id="tab-ports" class="tab-content">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Puerto</th>
+                <th>Protocolo</th>
+                <th>Estado</th>
+                <th>Servicio</th>
+                <th>Banner / Versión Identificada</th>
+              </tr>
+            </thead>
+            <tbody id="portsTableBody">
+              <tr>
+                <td colspan="5" class="empty-state">
+                  <div class="empty-icon">🔌</div>
+                  <div class="empty-title">Escaneo de puertos no iniciado</div>
+                  <div class="empty-sub">Se auditarán los puertos perimetrales 22 (SSH), 80 (HTTP), 443 (HTTPS) y 8080 (Proxy/Web).</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 3: Recomendaciones DevSecOps -->
+      <div id="tab-recs" class="tab-content">
+        <div class="rec-list" id="recsContainer">
+          <div class="rec-item">
+            <div class="rec-title">🔒 Forzar Transporte Cifrado Seguro (HSTS)</div>
+            <div class="rec-body">Habilitar el encabezado <code>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</code> en todos los servicios web institucionales del IIAP.</div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-title">🛡️ Implementar Content-Security-Policy (CSP) Restrictiva</div>
+            <div class="rec-body">Restringir orígenes permitidos para scripts, estilos e imágenes a fin de erradicar vectores de ataque por inyección Cross-Site Scripting (XSS).</div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-title">🙈 Ocultar Banners de Versión y Tecnologías (Server / X-Powered-By)</div>
+            <div class="rec-body">Ofuscar la directiva <code>ServerTokens Prod</code> en Apache o <code>server_tokens off</code> en Nginx para mitigar el fingerprinting automatizado.</div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-title">🧱 Filtrado Perimetral de Puertos Administrativos</div>
+            <div class="rec-body">Asegurar que el puerto 22 (SSH) o consolas de administración en 8080 no estén expuestas a Internet pública sin VPN institucional previa.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: JSON Raw API -->
+      <div id="tab-raw" class="tab-content">
+        <div class="json-box" id="rawJsonBox">// Los resultados en formato JSON estructurado aparecerán aquí tras finalizar el escaneo.</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pie de Página Institucional -->
+  <footer>
+    <div>
+      <strong>IIAP Web Security Recon</strong> • Desarrollado para la Oficina de Tecnologías de la Información (OTIC) - IIAP.
+    </div>
+    <div>
+      Estandarizado bajo <a href="https://owasp.org" target="_blank" rel="noopener">OWASP Foundation</a> & NIST SP 800-115.
+    </div>
+  </footer>
+
+  <!-- Lógica de Interacción Javascript -->
+  <script>
+    let currentScanData = null;
+
+    function setTarget(val) {
+      document.getElementById('targetInput').value = val;
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    document.getElementById('scanForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const targetInput = document.getElementById('targetInput');
+      const target = targetInput.value.trim();
+      if (!target) return;
+
+      const btnScan = document.getElementById('btnScan');
+      const btnExportPdf = document.getElementById('btnExportPdf');
+      const scanningStatus = document.getElementById('scanningStatus');
+
+      // Bloquear UI y activar loaders
+      btnScan.disabled = true;
+      btnExportPdf.disabled = true;
+      scanningStatus.style.display = 'flex';
+
+      try {
+        const response = await fetch('/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: target })
+        });
+
+        const resData = await response.json();
+
+        if (!resData.success) {
+          alert('Error en el escaneo: ' + (resData.error || 'Ocurrió un error inesperado'));
+          return;
+        }
+
+        currentScanData = resData.data;
+        renderResults(currentScanData);
+        btnExportPdf.disabled = false;
+
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión con el backend Flask: ' + err.message);
+      } finally {
+        btnScan.disabled = false;
+        scanningStatus.style.display = 'none';
+      }
+    });
+
+    function renderResults(data) {
+      // 1. Renderizar KPIs
+      document.getElementById('kpiIp').textContent = data.ip || 'No resuelta';
+      document.getElementById('kpiHostname').textContent = data.hostname || data.target;
+
+      const openPorts = (data.ports_info || []).filter(p => (p.state || '').toLowerCase() === 'open');
+      document.getElementById('kpiPorts').textContent = `${openPorts.length} / ${(data.ports_info || []).length}`;
+      document.getElementById('kpiPortsSub').textContent = openPorts.length > 0 
+        ? `Abiertos: [${openPorts.map(p => p.port).join(', ')}]` 
+        : 'Todos los puertos cerrados o filtrados';
+
+      const presentHeaders = (data.headers_analysis || []).filter(h => h.status === 'Presente');
+      document.getElementById('kpiHeaders').textContent = `${presentHeaders.length} / ${(data.headers_analysis || []).length}`;
+      document.getElementById('kpiHeadersSub').textContent = `${presentHeaders.length} cabeceras defensivas activas`;
+
+      document.getElementById('kpiTime').textContent = `${data.elapsed_time} s`;
+      document.getElementById('kpiEngine').textContent = `Motor: ${data.scanner_engine || 'python-nmap'}`;
+
+      // 2. Renderizar Tabla de Cabeceras
+      const headersTbody = document.getElementById('headersTableBody');
+      headersTbody.innerHTML = '';
+
+      (data.headers_analysis || []).forEach(h => {
+        const tr = document.createElement('tr');
+
+        let statusBadge = '';
+        if (h.status === 'Presente') statusBadge = '<span class="badge badge-present">Presente</span>';
+        else if (h.status === 'Ausente') statusBadge = '<span class="badge badge-absent">Ausente</span>';
+        else if (h.status === 'Expuesta') statusBadge = '<span class="badge badge-exposed">Expuesta</span>';
+        else statusBadge = `<span class="badge badge-secure">${h.status}</span>`;
+
+        let riskBadge = '';
+        const r = (h.risk || '').toLowerCase();
+        if (r === 'alto') riskBadge = '<span class="badge badge-risk-alto">Alto</span>';
+        else if (r === 'medio') riskBadge = '<span class="badge-risk-medio badge">Medio</span>';
+        else if (r === 'seguro') riskBadge = '<span class="badge badge-risk-seguro">Seguro</span>';
+        else riskBadge = `<span class="badge badge-risk-bajo">${h.risk}</span>`;
+
+        const valClean = h.value.length > 50 ? h.value.substring(0, 48) + '...' : h.value;
+
+        tr.innerHTML = `
+          <td><strong>${h.header}</strong></td>
+          <td>${statusBadge}</td>
+          <td>${riskBadge}</td>
+          <td class="font-mono" title="${h.value}">${valClean}</td>
+          <td style="color: var(--text-muted); font-size: 0.82rem;">${h.recommendation}</td>
+        `;
+        headersTbody.appendChild(tr);
+      });
+
+      // 3. Renderizar Tabla de Puertos
+      const portsTbody = document.getElementById('portsTableBody');
+      portsTbody.innerHTML = '';
+
+      (data.ports_info || []).forEach(p => {
+        const tr = document.createElement('tr');
+        const isOpen = (p.state || '').toLowerCase() === 'open';
+        const badgeClass = isOpen ? 'badge-open' : 'badge-closed';
+
+        tr.innerHTML = `
+          <td class="font-mono"><strong>${p.port}</strong></td>
+          <td class="font-mono">${p.protocol || 'TCP'}</td>
+          <td><span class="badge ${badgeClass}">${p.state}</span></td>
+          <td class="font-mono">${p.service || 'unknown'}</td>
+          <td class="font-mono" style="color: var(--text-muted);">${p.banner || 'Sin banner disponible'}</td>
+        `;
+        portsTbody.appendChild(tr);
+      });
+
+      // 4. Renderizar JSON Raw
+      document.getElementById('rawJsonBox').textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Exportar a PDF
+    document.getElementById('btnExportPdf').addEventListener('click', async function() {
+      if (!currentScanData) return;
+      const btnExport = document.getElementById('btnExportPdf');
+      btnExport.disabled = true;
+      btnExport.innerHTML = '<span>⏳ Compilando PDF...</span>';
+
+      try {
+        const response = await fetch('/api/export-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentScanData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Fallo al generar el archivo PDF en el servidor.');
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const filename = `reporte_iiap_${currentScanData.hostname || 'target'}.pdf`;
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+      } catch (err) {
+        alert('Error al descargar el PDF: ' + err.message);
+      } finally {
+        btnExport.disabled = false;
+        btnExport.innerHTML = '<span>📑 Exportar a PDF</span>';
+      }
+    });
+  </script>
+</body>
+</html>
