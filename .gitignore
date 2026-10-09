@@ -1,0 +1,39 @@
+# ==========================================
+# IIAP Web Security Recon - Git Ignore Rules
+# ==========================================
+
+# Entornos Virtuales Python
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Archivos compilados y bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Reportes generados (Evitar subir auditorías al repositorio)
+*.pdf
+reports/
+output/
+
+# Archivos de configuración de IDEs y editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Archivos temporales y de sistema operativo
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+*.log
+*.tmp
