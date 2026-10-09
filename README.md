@@ -1,4 +1,4 @@
-# IIAP Web Security Recon 🛡️🌲
+# IIAP Web Security Recon
 
 **Herramienta automatizada para la estandarización del footprinting y generación de reportes técnicos de seguridad web en el Instituto de Investigaciones de la Amazonía Peruana (IIAP).**
 
